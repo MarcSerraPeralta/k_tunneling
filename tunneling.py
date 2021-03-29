@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import numpy as np
 import scipy.integrate as integrate
 import argparse
@@ -192,7 +193,7 @@ def coeff_general(T, prob_function, E_TS, E_0, prob_args=None, PRINT=False):
 	I_N, error = integrate.quad(f, E_0, E_MAX, args=prob_args)
 	I_N, error = I_N/kT(T), error/kT(T) # dimensionless
 
-	if PRINT: print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
+	if PRINT and (I_N != 0): print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
 
 	# Analytical integration (E_MAX to infinity)
 	I_A = np.exp((E_TS - E_MAX)/kT(T)) # dimensionless
@@ -236,13 +237,13 @@ def coeff_squared(T, args, PRINT=False):
 	I_N1, error = integrate.quad(f, E_0, E_TS)
 	I_N1, error = I_N1/kT(T), error/kT(T) # dimensionless
 
-	if PRINT: print("Tunneling numerical integral (1) relative error: {0:0.1e} %".format(error/I_N1 * 100))
+	if PRINT and (I_N1 != 0): print("Tunneling numerical integral (1) relative error: {0:0.1e} %".format(error/I_N1 * 100))
 
 	f = lambda E: np.exp((E_TS - E)/kT(T)) / (1 + np.exp(A*np.sqrt(E - E_TS)))
 	I_N2, error = integrate.quad(f, E_TS, 2*E_TS - E_0)
 	I_N2, error = I_N2/kT(T), error/kT(T) # dimensionless
 
-	if PRINT: print("Tunneling numerical integral (2) relative error: {0:0.1e} %".format(error/I_N2 * 100))
+	if PRINT and (I_N2 != 0): print("Tunneling numerical integral (2) relative error: {0:0.1e} %".format(error/I_N2 * 100))
 
 	# Calculate tunneling coefficient
 	K_T = 1 + I_N1 - I_N2 	# dimensionless
@@ -342,6 +343,9 @@ def coeff_eckart_approx(T, args, PRINT=False):
 	freq_TS = np.abs(freq_TS)
 	E_0 = 0
 
+	# Avoid error in E_p > E_r
+	if E_r < 0: E_r = 0
+
 	# Calculate gamma
 	Vmax = E_TS - E_r
 	gamma = 2*np.pi*Vmax / hv(freq_TS)
@@ -358,7 +362,7 @@ def coeff_eckart_approx(T, args, PRINT=False):
 	I_N, error = integrate.quad(f, -gamma, x_MAX)
 	I_N, error = A*I_N, A*error 		# dimensionless 
 
-	if PRINT: print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
+	if PRINT and (I_N != 0): print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
 
 	# Analytical integration (E_MAX to infinity)
 	I_A = np.exp(-A*x_MAX) 				# dimensionless 
@@ -403,8 +407,8 @@ def coeff_wigner(T, args, PRINT=True):
 	delta = 2*np.pi*kT(T) / hv(freq_TS)
 	if PRINT and (gamma >= 1): print("gamma: {0:0.2f} (should be >>1)".format(gamma))
 	if gamma < 1: print("WARNING: gamma={0:0.2f} (should be >>1)".format(gamma))
-	if PRINT and (delta >= 1): print("delta: {0:0.2f} (should be >>1)".format(delta))
-	if delta < 1: print("WARNING: delta={0:0.2f} (should be >>1)".format(delta))
+	if PRINT and (delta >= 1): print("T={1:0.2f} delta: {0:0.2f} (should be >>1)".format(delta, T))
+	if delta < 1: print("WARNING: T={1:0.2f} delta={0:0.2f} (should be >>1)".format(delta, T))
 
 	# Calculate the transmission coefficient
 	K_T = 1 + (hv(freq_TS)/kT(T))**2 / 24	# dimensionless
@@ -464,7 +468,7 @@ def kSC_general(T, prob_function, E_TS, E_0, AG_TS, prob_args=None, PRINT=False)
 	I_N, error = integrate.quad(f, E_0, E_MAX, args=prob_args)
 	I_N, error = I_N/hv(1), error/hv(1) # cm^-1
 
-	if PRINT: print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
+	if PRINT and (I_N != 0): print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
 
 	# Analytical integration (E_MAX to infinity)
 	I_A = np.exp((E_TS - E_MAX)/kT(T))*kT(T)/hv(1) # cm^-1
@@ -505,13 +509,13 @@ def kSC_squared(T, args, PRINT=False):
 	I_N1, error = integrate.quad(f, E_0, E_TS)
 	I_N1, error = I_N1/hv(1), error/hv(1) # cm^-1
 
-	if PRINT: print("Tunneling numerical integral (1) relative error: {0:0.1e} %".format(error/I_N1 * 100))
+	if PRINT and (I_N1 != 0): print("Tunneling numerical integral (1) relative error: {0:0.1e} %".format(error/I_N1 * 100))
 
 	f = lambda E: np.exp((E_TS - E - AG_TS)/kT(T)) / (1 + np.exp(A*np.sqrt(E - E_TS)))
 	I_N2, error = integrate.quad(f, E_TS, 2*E_TS - E_0)
 	I_N2, error = I_N2/hv(1), error/hv(1) # cm^-1
 
-	if PRINT: print("Tunneling numerical integral (2) relative error: {0:0.1e} %".format(error/I_N2 * 100))
+	if PRINT and (I_N2 != 0): print("Tunneling numerical integral (2) relative error: {0:0.1e} %".format(error/I_N2 * 100))
 
 	# Calculate tunneling coefficient
 	k = kT(T)*np.exp(-AG_TS/kT(T))/hv(1) + I_N1 - I_N2 	# cm^-1
@@ -603,6 +607,9 @@ def kSC_eckart_approx(T, args, PRINT=False):
 	freq_TS = np.abs(freq_TS)
 	E_0 = 0
 
+	# Avoid error in E_p > E_r
+	if E_r < 0: E_r = 0
+
 	# Calculate gamma
 	Vmax = E_TS - E_r
 	gamma = 2*np.pi*Vmax / hv(freq_TS)
@@ -610,7 +617,7 @@ def kSC_eckart_approx(T, args, PRINT=False):
 	if gamma < 1: print("WARNING: gamma={0:0.2f} (should be >>1)".format(gamma))
 
 	# Calculate maximum 'energy' to integrate numerically (X_MAX) 
-	eps = 15 		# error = 10^(-eps) 
+	eps = 30 		# error = 10^(-eps) 
 	x_MAX = gamma*( (1 + eps*np.log(10)/(2*gamma))**2 - 1 ) 
 
 	# Numeric integration (E_0 to E_MAX)
@@ -619,7 +626,7 @@ def kSC_eckart_approx(T, args, PRINT=False):
 	I_N, error = integrate.quad(f, -gamma, x_MAX)
 	I_N, error = A*kT(T)*I_N/hv(1), A*kT(T)*error/hv(1)	# cm^-1
 
-	if PRINT: print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
+	if PRINT and (I_N != 0): print("Tunneling numerical integral relative error: {0:0.1e} %".format(error/I_N * 100))
 
 	# Analytical integration (E_MAX to infinity)
 	I_A = kT(T)*np.exp(-A*x_MAX - AG_TS/kT(T))/hv(1) 	# cm^-1
@@ -649,6 +656,24 @@ def kSC_wigner(T, args, PRINT=False):
 
 ###########################################################################################
 ###########################################################################################
+
+# TUNNELING CROSSOVER TEMPERATURE
+
+def Tx(AE_TS, freq_TS):
+	"""
+	Returns de tunneling crossover temperature, which indicates that below of which tunneling is important. 
+	'AE_TS' = variation of internal energy (including ZPE) from reactants to TS
+	'freq_TS' = imaginary frequency of TS
+	
+	Reference:
+	Fermann, J. T., & Auerbach, S. (2000). Modeling proton mobility in acidic zeolite clusters: II. 
+	Room temperature tunneling effects from semiclassical rate theory. 
+	The Journal of Chemical Physics, 112(15), 6787–6794. doi:10.1063/1.481318 
+	"""
+	freq_TS = np.abs(freq_TS)
+	T_x = hv(freq_TS)*AE_TS/(kT(1)*(2*np.pi*AE_TS - hv(freq_TS)*np.log(2))) # K
+	return T_x # K
+
 
 # CONSTANTS AND UNITS
 
